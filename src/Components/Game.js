@@ -12,9 +12,10 @@ class Game extends React.Component {
       xIsNext: true,
       stepNumber: 0,
       logOrderAscending: true,
-      gameOver: false
+      gameIsOver: false
     };
   }
+
   initializeArray(){
     let result = [];
     for(let i = 0; i < 9; i++){
@@ -22,6 +23,7 @@ class Game extends React.Component {
     }
     return result;
   }
+
   handleLogOrder(){
     this.setState({
       logOrderAscending: !this.state.logOrderAscending
@@ -32,36 +34,37 @@ class Game extends React.Component {
     const history = this.state.history;
     const current = history[history.length - 1];
     const squares = JSON.parse(JSON.stringify(current.squares));
+    let gameIsOver = this.state.gameIsOver;
 
-    const isGameOver = this.calculateWinner(squares);
-   
-    if (this.calculateWinner(squares) || squares[i].value) {
-              
+    if (gameIsOver || squares[i].value) {              
         return;
     }
-        
+
     squares[i].value = this.state.xIsNext ? 'X' : 'O';
 
-    if(this.calculateWinner(squares)){
-      debugger;
-      for(let i = 0; i < this.calculateWinner(squares).line.length; i++){
-          squares[this.calculateWinner(squares).line[i]].winner = true;
-      }  
+    const calcWinners = this.calculateWinner(squares);
+
+    if(calcWinners){
+      for(let i = 0; i < calcWinners.line.length; i++){
+          squares[calcWinners.line[i]].winner = true;
+      }
+      gameIsOver = true;  
     }
     this.setState({
         history: history.concat([{
-        squares: squares
+        squares
         }]),
         xIsNext: !this.state.xIsNext,
-        stepNumber: history.length
+        stepNumber: history.length,
+        gameIsOver
     });
   }
   jumpTo(step) {
     this.setState({
-        stepNumber: step,
-        
+        stepNumber: step,        
     });
   }
+
   renderLog(moves){
     return this.state.logOrderAscending ? <ol>{moves}</ol> : <ol reversed>{moves.reverse()}</ol>
   }
@@ -85,33 +88,8 @@ class Game extends React.Component {
     }
     return null;
   }
-  // applyWinnerStyle(squares, line){
-  //   const tempSquares = JSON.parse(JSON.stringify(squares));
-  //   let history = this.state.history;
-  //   for(let i = 0; i < line.length; i++){
-  //     tempSquares[line[i]].winner = true;
-  //   }
-    
-  //   this.setState({
-  //     history: history.concat([{
-  //       squares: tempSquares
-  //       }]),
-  //     gameOver: true
-  //   })
-  // }
-  // componentDidUpdate(prevProps, prevState){
-  //   const history = this.state.history;
-  //   const current = history[this.state.stepNumber];
-    
-  //   if(this.calculateWinner(current.squares) && !prevState.gameOver){      
-  //     const winnerLine = this.calculateWinner(current.squares).line;
-  //     this.applyWinnerStyle(current.squares, winnerLine);
-      
-     
-  //   }    
-  // }
+  
   render() {
-    //  console.log(this.state);
     const history = this.state.history;
     const current = history[this.state.stepNumber];
      
@@ -122,7 +100,6 @@ class Game extends React.Component {
     } else {
         status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
     }
-    //console.log(history);
     const moves = history.map((step, move) => {
         const desc = move ?
             'Move #' + move :
